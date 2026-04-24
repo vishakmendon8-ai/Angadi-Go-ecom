@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users: Can read/write their own data
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Products: Anyone can read, only admins (manual for now) can write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null; // In production, refine to admin only
+    }
+    
+    // Orders: Private per user
+    match /orders/{orderId} {
+      allow read, write: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
