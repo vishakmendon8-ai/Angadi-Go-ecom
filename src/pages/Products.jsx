@@ -4,12 +4,16 @@ import { collection, getDocs } from 'firebase/firestore';
 import ProductCard from '../components/ProductCard';
 import { Search, SlidersHorizontal, Grid, List, Loader2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialSearch = queryParams.get('q') || '';
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [viewMode, setViewMode] = useState('grid');
   const [sortOrder, setSortOrder] = useState('default');
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -39,6 +43,14 @@ const Products = () => {
     };
     fetchProducts();
   }, []);
+
+  // Sync searchTerm with URL if it changes (e.g., from Home page search)
+  useEffect(() => {
+    const q = new URLSearchParams(location.search).get('q');
+    if (q !== null) {
+      setSearchTerm(q);
+    }
+  }, [location.search]);
 
   const sortedAndFilteredProducts = [...products]
     .filter(p => {

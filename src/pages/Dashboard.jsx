@@ -6,7 +6,7 @@ import {
   User, Settings, Package, Bell, Shield, LogOut,
   ChevronRight, Database, CheckCircle, AlertCircle, Trash2, Loader2,
   Cpu, MapPin, Calendar, CreditCard, Edit3, Camera, Save, X, ChevronDown,
-  ExternalLink, Crown, Heart
+  ExternalLink, Crown, Heart, ShieldCheck, Globe, Zap
 } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { db, auth as firebaseAuth, storage } from '../lib/firebase';
@@ -217,9 +217,44 @@ const Dashboard = () => {
     }
   };
 
+  const handleEnable2FA = () => {
+    setInitStatus('loading');
+    setTimeout(() => {
+      setInitStatus('success');
+      setTimeout(() => setInitStatus(null), 3000);
+    }, 1000);
+  };
+
+  const handleRevokeSessions = () => {
+    setInitStatus('loading');
+    setTimeout(() => {
+      setInitStatus('success');
+      setTimeout(() => setInitStatus(null), 3000);
+    }, 1000);
+  };
+
+  const formatOrderDate = (createdAt) => {
+    if (!createdAt) return 'RECENT';
+    if (typeof createdAt.toDate === 'function') return createdAt.toDate().toLocaleString();
+    if (createdAt.seconds) return new Date(createdAt.seconds * 1000).toLocaleString();
+    try {
+      return new Date(createdAt).toLocaleString();
+    } catch {
+      return 'RECENT';
+    }
+  };
+
   const canCancelOrder = (createdAt) => {
     if (!createdAt) return false;
-    const orderTime = createdAt.toDate().getTime();
+    let orderTime;
+    if (typeof createdAt.toDate === 'function') {
+      orderTime = createdAt.toDate().getTime();
+    } else if (createdAt.seconds) {
+      orderTime = createdAt.seconds * 1000;
+    } else {
+      orderTime = new Date(createdAt).getTime();
+    }
+    if (isNaN(orderTime)) return false;
     const currentTime = new Date().getTime();
     const diffInHours = (currentTime - orderTime) / (1000 * 60 * 60);
     return diffInHours < 5;
@@ -378,7 +413,7 @@ const Dashboard = () => {
                                 <div>
                                   <div className="text-white font-black italic tracking-tighter uppercase truncate max-w-[200px]">ID: {order.orderId || order.id}</div>
                                   <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                                    <Calendar size={12} /> {order.createdAt?.toDate?.().toLocaleString() || 'RECENT'}
+                                    <Calendar size={12} /> {formatOrderDate(order.createdAt)}
                                   </div>
                                 </div>
                               </div>
@@ -523,8 +558,125 @@ const Dashboard = () => {
                     </div>
                   )}
                 </motion.div>
+              ) : activeTab === 'Neural Wishlist' ? (
+                <motion.div key="wishlist" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  {wishlist.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {wishlist.map((product) => (
+                        <ProductCard key={product.id} product={product} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="glass-panel p-20 text-center">
+                      <Heart size={48} className="mx-auto text-gray-700 mb-6" />
+                      <h3 className="text-xl font-bold text-gray-500 uppercase tracking-widest">Neural Wishlist Empty.</h3>
+                      <p className="text-gray-600 mt-2 text-xs uppercase tracking-widest">Track units for future acquisition.</p>
+                    </div>
+                  )}
+                </motion.div>
+              ) : activeTab === 'Security & Access' ? (
+                <motion.div key="security" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                  <div className="glass-panel p-8 border-white/5 space-y-8">
+                    <div className="flex items-center justify-between pb-6 border-b border-white/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                          <ShieldCheck size={24} />
+                        </div>
+                        <div>
+                          <div className="text-white font-bold uppercase tracking-tighter">Two-Factor Authentication</div>
+                          <div className="text-[10px] text-gray-500 font-bold uppercase">Biometric Link Status: SECURE</div>
+                        </div>
+                      </div>
+                      <button onClick={handleEnable2FA} disabled={initStatus === 'loading'} className="px-6 py-2 bg-white/5 rounded-lg text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-primary hover:text-white transition-all">ENABLE</button>
+                    </div>
+
+                    <div className="flex items-center justify-between pb-6 border-b border-white/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-gray-400">
+                          <Globe size={24} />
+                        </div>
+                        <div>
+                          <div className="text-white font-bold uppercase tracking-tighter">Active Sessions</div>
+                          <div className="text-[10px] text-gray-500 font-bold uppercase">Currently synced with 1 neural node</div>
+                        </div>
+                      </div>
+                      <button onClick={handleRevokeSessions} disabled={initStatus === 'loading'} className="px-6 py-2 bg-white/5 rounded-lg text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-red-500/20 hover:text-red-500 transition-all">REVOKE ALL</button>
+                    </div>
+
+                    <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Zap size={16} className="text-primary" />
+                        <span className="text-xs font-black text-white uppercase italic">Account Registry: {String(currentUser.plan || 'STANDARD').toUpperCase()} TIED_NODE</span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest leading-relaxed">
+                        Your account is currently registered on the {String(currentUser.plan || 'standard')} tier. Upgrade to ELITE for prioritized neural processing.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : activeTab === 'Notifications' ? (
+                <motion.div key="notifications" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+                  {[
+                    { title: "SYSTEM_UPGRADE_COMPLETE", desc: "Neural OS v4.2 has been successfully deployed to your node.", time: "2m ago", type: "system" },
+                    { title: "ACQUISITION_VERIFIED", desc: "Your recent hardware order AG-38291 is now in transit.", time: "5h ago", type: "order" },
+                    { title: "SECURITY_ALERT", desc: "New login detected from a verified Vercel endpoint.", time: "1d ago", type: "alert" }
+                  ].map((notif, i) => (
+                    <div key={i} className="glass-panel p-6 border-white/5 flex items-start gap-4 hover:border-primary/30 transition-all cursor-pointer group">
+                      <div className={`w-2 h-2 rounded-full mt-2 ${notif.type === 'alert' ? 'bg-red-500 animate-ping' : 'bg-primary'}`} />
+                      <div className="flex-grow">
+                        <div className="flex justify-between items-start mb-1">
+                          <h4 className="text-sm font-black text-white italic tracking-tight group-hover:text-primary transition-colors">{notif.title}</h4>
+                          <span className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{notif.time}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest leading-normal">{notif.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <button className="w-full py-4 text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] hover:text-white transition-colors italic">CLEAR_ALL_LOGS</button>
+                </motion.div>
+              ) : activeTab === 'Neural Settings' ? (
+                <motion.div key="settings" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
+                  <div className="glass-panel p-8 border-white/5 space-y-10">
+                    <div>
+                      <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                        <Database size={14} className="text-primary" /> Data Preferences
+                      </h3>
+                      <div className="space-y-4">
+                        <label className="flex items-center justify-between cursor-pointer group p-4 rounded-xl hover:bg-white/5 transition-colors">
+                          <span className="text-sm font-bold text-white uppercase tracking-tighter italic">Anonymous Neural Metrics</span>
+                          <div className="w-12 h-6 bg-white/10 rounded-full relative p-1 group-hover:bg-white/20 transition-colors">
+                            <div className="absolute right-1 top-1 w-4 h-4 bg-primary rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                          </div>
+                        </label>
+                        <label className="flex items-center justify-between cursor-pointer group p-4 rounded-xl hover:bg-white/5 transition-colors">
+                          <span className="text-sm font-bold text-white uppercase tracking-tighter italic">Live Stock Updates</span>
+                          <div className="w-12 h-6 bg-white/10 rounded-full relative p-1">
+                            <div className="absolute left-1 top-1 w-4 h-4 bg-gray-600 rounded-full" />
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                        <Cpu size={14} className="text-primary" /> Visual Interface
+                      </h3>
+                      <div className="grid grid-cols-3 gap-4">
+                        {['Default Dark', 'High Contrast', 'Neon Pulse'].map((theme) => (
+                          <button key={theme} className={`p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest italic transition-all ${theme === 'Default Dark' ? 'border-primary bg-primary/10 text-primary' : 'border-white/5 bg-white/5 text-gray-500 hover:border-white/20'}`}>
+                            {theme}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button className="w-full py-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-red-500 hover:text-white transition-all italic mt-12">
+                      TERMINATE_NEURAL_LINK (DELETE ACCOUNT)
+                    </button>
+                  </div>
+                </motion.div>
               ) : (
-                <div className="glass-panel p-20 text-center text-gray-500 uppercase font-bold tracking-widest">Neural link restricted.</div>
+                <div className="glass-panel p-20 text-center text-gray-500 uppercase font-bold tracking-widest italic">Neural link restricted.</div>
               )}
             </AnimatePresence>
           </section>

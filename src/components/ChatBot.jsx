@@ -53,7 +53,7 @@ const ChatBot = () => {
     }
 
     try {
-        const response = await fetch(`http://${window.location.hostname}:5002/api/generate-pdf-token`, {
+        const response = await fetch(`/api/generate-pdf-token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -65,7 +65,7 @@ const ChatBot = () => {
         if (!response.ok) throw new Error("TOKEN_PACKET_LOSS");
 
         const { token } = await response.json();
-        window.location.href = `http://${window.location.hostname}:5002/api/download-manifest/${token}`;
+        window.location.href = `/api/download-manifest/${token}`;
     } catch (err) {
         console.error("MANIFEST_SYNCHRONIZATION_FAILURE:", err);
         alert(`NEURAL_OS_ERROR: ${err.message || "Failed to download manifest."}`);
@@ -97,7 +97,7 @@ const ChatBot = () => {
     setShowPopup(false);
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:5002/api/chat`, {
+      const response = await fetch(`/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

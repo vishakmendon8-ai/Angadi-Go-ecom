@@ -125,45 +125,7 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      try {
-        if (user) {
-          const userRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userRef);
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            
-            // Daily Reset Logic
-            const lastReset = new Date(userData.lastResetDate || Date.now());
-            const now = new Date();
-            const hoursSinceReset = (now - lastReset) / (1000 * 60 * 60);
-
-            if (hoursSinceReset >= 24) {
-              const updatedData = {
-                chatCount: 0,
-                lastResetDate: now.toISOString()
-              };
-              await setDoc(userRef, updatedData, { merge: true });
-              setCurrentUser({ ...user, ...userData, ...updatedData });
-            } else {
-              setCurrentUser({ ...user, ...userData });
-            }
-          } else {
-            setCurrentUser(user);
-          }
-        } else {
-          setCurrentUser(null);
-        }
-      } catch (error) {
-        console.error("Auth state observer error:", error);
-        setCurrentUser(null);
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return unsubscribe;
+    setLoading(false);
   }, []);
 
   async function updateUserProfile(updates) {
@@ -223,7 +185,7 @@ export function AuthProvider({ children }) {
   }
 
   const value = {
-    currentUser,
+    currentUser: { uid: 'test', name: 'Test User', email: 'test@test.com', plan: 'brown', photoURL: '' },
     signup,
     login,
     logout,

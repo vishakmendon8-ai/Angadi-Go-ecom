@@ -164,7 +164,7 @@ const Cart = () => {
       clearCart();
     } catch (err) {
       console.error("Checkout failed:", err);
-      alert("Checkout failed. Check your connection.");
+      alert(`Checkout failed: ${err.message || "Unknown error"}. Check your Firebase settings.`);
     } finally {
       setLoading(false);
     }

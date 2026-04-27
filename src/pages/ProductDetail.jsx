@@ -23,10 +23,8 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(null);
-  const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [subscribing, setSubscribing] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
+  const [added, setAdded] = useState(false);
 
   useEffect(() => {
     const fetchProductAndRelated = async () => {
@@ -84,29 +82,6 @@ const ProductDetail = () => {
     setTimeout(() => setAdded(false), 3000);
   };
 
-  const handleNotifyMe = async () => {
-    if (!currentUser) {
-      navigate('/auth');
-      return;
-    }
-    setSubscribing(true);
-    try {
-      await addDoc(collection(db, 'stock_subscriptions'), {
-        userId: currentUser.uid,
-        userEmail: currentUser.email,
-        productId: product.id,
-        productName: product.name,
-        timestamp: serverTimestamp(),
-        status: 'pending'
-      });
-      setSubscribed(true);
-    } catch (err) {
-      console.error("Subscription failed:", err);
-      alert("System failed to register notification link.");
-    } finally {
-      setSubscribing(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -245,23 +220,19 @@ const ProductDetail = () => {
             </div>
 
             <motion.button 
-              whileTap={isOutOfStock ? (subscribed ? {} : { scale: 0.95 }) : { scale: 0.95 }}
-              onClick={isOutOfStock ? (subscribed ? null : handleNotifyMe) : handleAddToCart}
-              disabled={isOutOfStock && subscribed}
+              whileTap={isOutOfStock ? {} : { scale: 0.95 }}
+              onClick={isOutOfStock ? null : handleAddToCart}
+              disabled={isOutOfStock}
               className={`flex-grow flex items-center justify-center gap-3 py-5 px-8 rounded-2xl font-black italic tracking-tighter text-xl transition-all ${
                 isOutOfStock
-                ? (subscribed ? 'bg-green-500/20 text-green-500 border border-green-500/30' : 'bg-primary text-white hover:bg-primary-glow shadow-[0_0_30px_rgba(59,130,246,0.3)]')
+                ? 'bg-white/5 text-gray-500 border border-white/10 cursor-not-allowed'
                 : added 
                 ? 'bg-green-500 text-white' 
                 : 'bg-primary text-white hover:bg-primary-glow shadow-[0_0_30px_rgba(59,130,246,0.3)]'
               }`}
             >
               {isOutOfStock ? (
-                subscribed ? (
-                  <> <CheckCircle size={24} /> LINK_ESTABLISHED </>
-                ) : (
-                  <> {subscribing ? <Loader2 className="animate-spin" size={24} /> : <Bell size={24} />} NOTIFY_WHEN_DEPLOYED </>
-                )
+                <> DEPLETED </>
               ) : added ? (
                 <> <CheckCircle size={24} /> UNIT ADAPTED </>
               ) : (

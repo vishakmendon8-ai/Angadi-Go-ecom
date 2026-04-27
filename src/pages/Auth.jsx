@@ -35,11 +35,17 @@ const Auth = () => {
   const [step, setStep] = useState(1); // 1: send otp, 2: verify otp
 
   const { 
-    login, signup, signInWithGoogle, 
+    currentUser, login, signup, signInWithGoogle, 
     setupRecaptcha, signInWithPhone, confirmPhoneLogin 
   } = useAuth();
   
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (currentUser) {
+      navigate('/dashboard');
+    }
+  }, [currentUser, navigate]);
 
   useEffect(() => {
     // Clear error when switching modes
