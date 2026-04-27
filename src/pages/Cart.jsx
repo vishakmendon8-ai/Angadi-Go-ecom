@@ -87,6 +87,12 @@ const Cart = () => {
   const [address, setAddress] = useState('Neo-City, Sector 7');
   const [paymentMethod, setPaymentMethod] = useState('Neural Card');
 
+  useEffect(() => {
+    if (currentUser?.addresses?.length > 0 && address === 'Neo-City, Sector 7') {
+      setAddress(currentUser.addresses[0]);
+    }
+  }, [currentUser]);
+
   // New Discount States
   const [couponCode, setCouponCode] = useState('');
   const [couponDiscount, setCouponDiscount] = useState(0);
@@ -259,8 +265,23 @@ const Cart = () => {
               <h3 className="text-xs font-bold text-gray-400 mb-4 uppercase tracking-[0.3em] flex items-center gap-2">
                 <MapPin size={14} className="text-primary" /> Delivery Node
               </h3>
+              {currentUser?.addresses?.length > 0 && (
+                <select 
+                  onChange={(e) => {
+                    if (e.target.value) setAddress(e.target.value);
+                  }}
+                  value={currentUser.addresses.includes(address) ? address : ""}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:border-primary transition-colors text-xs font-bold uppercase tracking-widest appearance-none mb-3"
+                >
+                  <option value="" className="bg-dark text-gray-500">CUSTOM ADDRESS...</option>
+                  {currentUser.addresses.map((addr, idx) => (
+                    <option key={idx} value={addr} className="bg-dark text-white">{addr}</option>
+                  ))}
+                </select>
+              )}
               <input
                 type="text"
+                placeholder="ENTER CUSTOM NODE ADDRESS..."
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:border-primary transition-colors text-sm font-bold uppercase"

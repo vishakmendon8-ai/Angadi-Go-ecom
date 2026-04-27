@@ -67,6 +67,9 @@ const Dashboard = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState(null);
 
+  // Address States
+  const [newAddressInput, setNewAddressInput] = useState('');
+
   // Settings States
   const [metricsEnabled, setMetricsEnabled] = useState(true);
   const [liveStockEnabled, setLiveStockEnabled] = useState(false);
@@ -246,6 +249,35 @@ const Dashboard = () => {
     }, 1000);
   };
 
+  const handleAddAddress = async () => {
+    if (!newAddressInput.trim()) return;
+    setInitStatus('loading');
+    try {
+      const currentAddresses = currentUser.addresses || [];
+      await updateUserProfile({ addresses: [...currentAddresses, newAddressInput.trim()] });
+      setNewAddressInput('');
+      setInitStatus('success');
+      setTimeout(() => setInitStatus(null), 3000);
+    } catch (err) {
+      setInitStatus('error');
+      setErrorMessage("Failed to add delivery node.");
+    }
+  };
+
+  const handleRemoveAddress = async (indexToRemove) => {
+    setInitStatus('loading');
+    try {
+      const currentAddresses = currentUser.addresses || [];
+      const updatedAddresses = currentAddresses.filter((_, i) => i !== indexToRemove);
+      await updateUserProfile({ addresses: updatedAddresses });
+      setInitStatus('success');
+      setTimeout(() => setInitStatus(null), 3000);
+    } catch (err) {
+      setInitStatus('error');
+      setErrorMessage("Failed to remove delivery node.");
+    }
+  };
+
   const formatOrderDate = (createdAt) => {
     if (!createdAt) return 'RECENT';
     if (typeof createdAt.toDate === 'function') return createdAt.toDate().toLocaleString();
@@ -276,6 +308,7 @@ const Dashboard = () => {
   const menuItems = [
     { icon: Package, label: 'Order History' },
     { icon: Heart, label: 'Neural Wishlist' },
+    { icon: MapPin, label: 'Delivery Nodes' },
     { icon: Shield, label: 'Security & Access' },
     { icon: Bell, label: 'Notifications' },
     { icon: Settings, label: 'Neural Settings' },
@@ -586,6 +619,52 @@ const Dashboard = () => {
                       <p className="text-gray-600 mt-2 text-xs uppercase tracking-widest">Track units for future acquisition.</p>
                     </div>
                   )}
+                </motion.div>
+              ) : activeTab === 'Delivery Nodes' ? (
+                <motion.div key="delivery_nodes" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                  <div className="glass-panel p-8 border-white/5 space-y-8">
+                    <div>
+                      <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                        <MapPin size={16} className="text-primary" /> Active Delivery Nodes
+                      </h3>
+                      <div className="space-y-4">
+                        {(currentUser.addresses || []).length > 0 ? (
+                          (currentUser.addresses || []).map((address, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl group hover:border-primary/30 transition-all">
+                              <span className="text-sm font-bold text-gray-300 uppercase tracking-widest truncate">{address}</span>
+                              <button onClick={() => handleRemoveAddress(i)} disabled={initStatus === 'loading'} className="p-2 text-gray-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-8 text-center bg-white/5 rounded-xl border border-white/5 border-dashed">
+                            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest italic">No delivery nodes configured.</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="pt-6 border-t border-white/5">
+                      <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-4">Establish New Node</h3>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="ENTER FULL ADDRESS..." 
+                          value={newAddressInput}
+                          onChange={(e) => setNewAddressInput(e.target.value)}
+                          className="flex-grow bg-dark border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-colors"
+                        />
+                        <button 
+                          onClick={handleAddAddress}
+                          disabled={initStatus === 'loading' || !newAddressInput.trim()}
+                          className="px-6 py-3 bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all disabled:opacity-50"
+                        >
+                          ADD NODE
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               ) : activeTab === 'Security & Access' ? (
                 <motion.div key="security" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
