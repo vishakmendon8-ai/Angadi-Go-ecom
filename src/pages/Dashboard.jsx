@@ -67,6 +67,19 @@ const Dashboard = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState(null);
 
+  // Settings States
+  const [metricsEnabled, setMetricsEnabled] = useState(true);
+  const [liveStockEnabled, setLiveStockEnabled] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem('neural_theme') || 'Default Dark');
+
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme);
+    localStorage.setItem('neural_theme', newTheme);
+    document.body.className = '';
+    if (newTheme === 'High Contrast') document.body.classList.add('contrast-125');
+    if (newTheme === 'Neon Pulse') document.body.classList.add('backdrop-hue-rotate-90');
+  };
+
   useEffect(() => {
     const fetchOrders = async () => {
       if (!currentUser) return;
@@ -642,16 +655,16 @@ const Dashboard = () => {
                         <Database size={14} className="text-primary" /> Data Preferences
                       </h3>
                       <div className="space-y-4">
-                        <label className="flex items-center justify-between cursor-pointer group p-4 rounded-xl hover:bg-white/5 transition-colors">
+                        <label onClick={() => setMetricsEnabled(!metricsEnabled)} className="flex items-center justify-between cursor-pointer group p-4 rounded-xl hover:bg-white/5 transition-colors">
                           <span className="text-sm font-bold text-white uppercase tracking-tighter italic">Anonymous Neural Metrics</span>
-                          <div className="w-12 h-6 bg-white/10 rounded-full relative p-1 group-hover:bg-white/20 transition-colors">
-                            <div className="absolute right-1 top-1 w-4 h-4 bg-primary rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                          <div className={`w-12 h-6 rounded-full relative p-1 transition-colors ${metricsEnabled ? 'bg-primary/20 group-hover:bg-primary/30' : 'bg-white/10 group-hover:bg-white/20'}`}>
+                            <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${metricsEnabled ? 'right-1 bg-primary shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'left-1 bg-gray-600'}`} />
                           </div>
                         </label>
-                        <label className="flex items-center justify-between cursor-pointer group p-4 rounded-xl hover:bg-white/5 transition-colors">
+                        <label onClick={() => setLiveStockEnabled(!liveStockEnabled)} className="flex items-center justify-between cursor-pointer group p-4 rounded-xl hover:bg-white/5 transition-colors">
                           <span className="text-sm font-bold text-white uppercase tracking-tighter italic">Live Stock Updates</span>
-                          <div className="w-12 h-6 bg-white/10 rounded-full relative p-1">
-                            <div className="absolute left-1 top-1 w-4 h-4 bg-gray-600 rounded-full" />
+                          <div className={`w-12 h-6 rounded-full relative p-1 transition-colors ${liveStockEnabled ? 'bg-primary/20 group-hover:bg-primary/30' : 'bg-white/10 group-hover:bg-white/20'}`}>
+                            <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${liveStockEnabled ? 'right-1 bg-primary shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'left-1 bg-gray-600'}`} />
                           </div>
                         </label>
                       </div>
@@ -662,9 +675,9 @@ const Dashboard = () => {
                         <Cpu size={14} className="text-primary" /> Visual Interface
                       </h3>
                       <div className="grid grid-cols-3 gap-4">
-                        {['Default Dark', 'High Contrast', 'Neon Pulse'].map((theme) => (
-                          <button key={theme} className={`p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest italic transition-all ${theme === 'Default Dark' ? 'border-primary bg-primary/10 text-primary' : 'border-white/5 bg-white/5 text-gray-500 hover:border-white/20'}`}>
-                            {theme}
+                        {['Default Dark', 'High Contrast', 'Neon Pulse'].map((t) => (
+                          <button key={t} onClick={() => handleThemeChange(t)} className={`p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest italic transition-all ${theme === t ? 'border-primary bg-primary/10 text-primary shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'border-white/5 bg-white/5 text-gray-500 hover:border-white/20'}`}>
+                            {t}
                           </button>
                         ))}
                       </div>
