@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, User, Menu, X, Zap, Crown } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
@@ -11,8 +11,10 @@ const Navbar = () => {
   const { currentUser, logout, upgradePlan } = useAuth();
   const { cart } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const cartHasItems = cartItemCount > 0;
   const [isCartAnimating, setIsCartAnimating] = useState(false);
   const [prevCartCount, setPrevCartCount] = useState(cartItemCount);
 
@@ -91,22 +93,14 @@ const Navbar = () => {
             </Link>
           )}
 
-          <Link 
-            to="/cart" 
-            className={`group/cart relative p-3 transition-all duration-300 rounded-xl active:scale-110 active:text-primary ${
-              isCartAnimating 
-                ? 'text-white bg-primary/20 shadow-[0_0_20px_rgba(59,130,246,0.6)] scale-110' 
-                : 'text-gray-400 hover:text-primary hover:bg-white/5'
-            }`}
+          <Link
+            to="/cart"
+            className={`group/cart relative p-3 rounded-xl transition-all duration-300 ${cartHasItems ? 'text-white bg-primary/10' : 'text-gray-400 hover:text-primary hover:bg-white/5'} ${isCartAnimating ? 'shadow-[0_0_20px_rgba(59,130,246,0.6)] scale-110' : ''}`}
             aria-label="View Cart"
           >
-            <ShoppingCart size={22} className={`transition-all duration-300 ${isCartAnimating ? 'scale-110 text-primary' : 'group-hover/cart:rotate-[-10deg]'}`} />
-            {cart.length > 0 && (
-              <span className={`absolute top-1 right-1 bg-primary text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-dark transition-all duration-300 ${
-                isCartAnimating 
-                  ? 'scale-125 shadow-[0_0_15px_rgba(59,130,246,1)] animate-pulse' 
-                  : 'shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]'
-              }`}>
+            <ShoppingCart size={22} className={`transition-all duration-300 ${isCartAnimating ? 'scale-110 text-primary' : ''}`} />
+            {cartHasItems && (
+              <span className={`absolute top-1 right-1 bg-primary text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-dark transition-all duration-300 ${isCartAnimating ? 'scale-125 shadow-[0_0_15px_rgba(59,130,246,1)] animate-pulse' : ''}`}>
                 {cartItemCount}
               </span>
             )}
@@ -117,8 +111,15 @@ const Navbar = () => {
               <Link to="/dashboard" className="text-gray-400 hover:text-primary transition-colors">
                 <User size={22} />
               </Link>
-              <button 
-                onClick={logout}
+              <button
+                onClick={async () => {
+                  try {
+                    await logout();
+                    navigate('/auth');
+                  } catch (err) {
+                    console.error('Logout failed', err);
+                  }
+                }}
                 className="text-xs font-semibold px-4 py-2 border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
               >
                 LOGOUT
@@ -168,7 +169,15 @@ const Navbar = () => {
                   <Link to="/dashboard" className="flex items-center gap-3 text-lg" onClick={() => setIsOpen(false)}>
                     <User size={20} /> Profile
                   </Link>
-                  <button onClick={() => { logout(); setIsOpen(false); }} className="text-left py-2 text-red-400">
+                  <button onClick={async () => {
+                    try {
+                      await logout();
+                      setIsOpen(false);
+                      navigate('/auth');
+                    } catch (err) {
+                      console.error('Logout failed', err);
+                    }
+                  }} className="text-left py-2 text-red-400">
                     Logout
                   </button>
                 </>

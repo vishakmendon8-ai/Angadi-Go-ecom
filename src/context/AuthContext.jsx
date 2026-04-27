@@ -125,7 +125,38 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            setCurrentUser({ uid: user.uid, ...userDoc.data() });
+          } else {
+            setCurrentUser({
+              uid: user.uid,
+              name: user.displayName || 'Neural Link Pilot',
+              email: user.email || '',
+              photoURL: user.photoURL || generateAvatar(user.displayName),
+              plan: 'brown',
+            });
+          }
+        } catch (err) {
+          console.error("AUTH_STATE_SYNC_ERROR:", err);
+          setCurrentUser({
+            uid: user.uid,
+            name: user.displayName || 'Neural Link Pilot',
+            email: user.email || '',
+            photoURL: user.photoURL || '',
+            plan: 'brown',
+          });
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
   }, []);
 
   async function updateUserProfile(updates) {
@@ -139,11 +170,16 @@ export function AuthProvider({ children }) {
 
     try {
       const userRef = doc(db, 'users', auth.currentUser.uid);
-      await setDoc(userRef, {
+      const updateData = {
         name: finalName,
         photoURL: finalPhoto,
         updatedAt: serverTimestamp()
-      }, { merge: true });
+      };
+      // Merge any extra fields like addresses
+      if (updates.addresses !== undefined) {
+        updateData.addresses = updates.addresses;
+      }
+      await setDoc(userRef, updateData, { merge: true });
 
       await updateProfile(auth.currentUser, {
         displayName: finalName,
@@ -152,6 +188,7 @@ export function AuthProvider({ children }) {
 
       setCurrentUser(prev => ({
         ...prev,
+        ...updateData,
         name: finalName,
         photoURL: finalPhoto
       }));
@@ -185,7 +222,7 @@ export function AuthProvider({ children }) {
   }
 
   const value = {
-    currentUser: { uid: 'test', name: 'Test User', email: 'test@test.com', plan: 'brown', photoURL: '' },
+    currentUser,
     signup,
     login,
     logout,
