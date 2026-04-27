@@ -12,6 +12,21 @@ const Navbar = () => {
   const { cart } = useCart();
   const location = useLocation();
 
+  const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const [isCartAnimating, setIsCartAnimating] = useState(false);
+  const [prevCartCount, setPrevCartCount] = useState(cartItemCount);
+
+  useEffect(() => {
+    if (cartItemCount > prevCartCount) {
+      setIsCartAnimating(true);
+      const timer = setTimeout(() => setIsCartAnimating(false), 800);
+      setPrevCartCount(cartItemCount);
+      return () => clearTimeout(timer);
+    } else if (cartItemCount < prevCartCount) {
+      setPrevCartCount(cartItemCount);
+    }
+  }, [cartItemCount, prevCartCount]);
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -78,13 +93,21 @@ const Navbar = () => {
 
           <Link 
             to="/cart" 
-            className="group/cart relative p-3 text-gray-400 hover:text-primary transition-all duration-300 hover:bg-white/5 rounded-xl active:scale-110 active:text-primary"
+            className={`group/cart relative p-3 transition-all duration-300 rounded-xl active:scale-110 active:text-primary ${
+              isCartAnimating 
+                ? 'text-white bg-primary/20 shadow-[0_0_20px_rgba(59,130,246,0.6)] scale-110' 
+                : 'text-gray-400 hover:text-primary hover:bg-white/5'
+            }`}
             aria-label="View Cart"
           >
-            <ShoppingCart size={22} className="group-hover/cart:rotate-[-10deg] transition-transform" />
+            <ShoppingCart size={22} className={`transition-all duration-300 ${isCartAnimating ? 'scale-110 text-primary' : 'group-hover/cart:rotate-[-10deg]'}`} />
             {cart.length > 0 && (
-              <span className="absolute top-1 right-1 bg-primary text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)] border-2 border-dark">
-                {cart.length}
+              <span className={`absolute top-1 right-1 bg-primary text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-dark transition-all duration-300 ${
+                isCartAnimating 
+                  ? 'scale-125 shadow-[0_0_15px_rgba(59,130,246,1)] animate-pulse' 
+                  : 'shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]'
+              }`}>
+                {cartItemCount}
               </span>
             )}
           </Link>
