@@ -68,7 +68,13 @@ const Dashboard = () => {
   const [expandedOrder, setExpandedOrder] = useState(null);
 
   // Address States
-  const [newAddressInput, setNewAddressInput] = useState('');
+  const [newAddressForm, setNewAddressForm] = useState({
+    label: '',
+    street: '',
+    city: '',
+    state: '',
+    pincode: ''
+  });
 
   // Settings States
   const [metricsEnabled, setMetricsEnabled] = useState(true);
@@ -250,12 +256,21 @@ const Dashboard = () => {
   };
 
   const handleAddAddress = async () => {
-    if (!newAddressInput.trim()) return;
+    const { label, street, city, state, pincode } = newAddressForm;
+    if (!street.trim() || !city.trim() || !pincode.trim()) {
+      setInitStatus('error');
+      setErrorMessage("Street, City, and Pin Code are required.");
+      setTimeout(() => setInitStatus(null), 3000);
+      return;
+    }
+    
+    const formattedAddress = `${label ? `[${label.toUpperCase()}] ` : ''}${street.trim()}, ${city.trim()}${state ? `, ${state.trim()}` : ''}, PIN: ${pincode.trim()}`;
+
     setInitStatus('loading');
     try {
       const currentAddresses = currentUser.addresses || [];
-      await updateUserProfile({ addresses: [...currentAddresses, newAddressInput.trim()] });
-      setNewAddressInput('');
+      await updateUserProfile({ addresses: [...currentAddresses, formattedAddress] });
+      setNewAddressForm({ label: '', street: '', city: '', state: '', pincode: '' });
       setInitStatus('success');
       setTimeout(() => setInitStatus(null), 3000);
     } catch (err) {
@@ -647,22 +662,50 @@ const Dashboard = () => {
                     
                     <div className="pt-6 border-t border-white/5">
                       <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-4">Establish New Node</h3>
-                      <div className="flex gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <input 
                           type="text" 
-                          placeholder="ENTER FULL ADDRESS..." 
-                          value={newAddressInput}
-                          onChange={(e) => setNewAddressInput(e.target.value)}
-                          className="flex-grow bg-dark border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-colors"
+                          placeholder="LABEL (e.g. HOME, WORK)" 
+                          value={newAddressForm.label}
+                          onChange={(e) => setNewAddressForm(prev => ({ ...prev, label: e.target.value }))}
+                          className="bg-dark border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-colors"
                         />
-                        <button 
-                          onClick={handleAddAddress}
-                          disabled={initStatus === 'loading' || !newAddressInput.trim()}
-                          className="px-6 py-3 bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all disabled:opacity-50"
-                        >
-                          ADD NODE
-                        </button>
+                        <input 
+                          type="text" 
+                          placeholder="STREET ADDRESS *" 
+                          value={newAddressForm.street}
+                          onChange={(e) => setNewAddressForm(prev => ({ ...prev, street: e.target.value }))}
+                          className="bg-dark border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-colors"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="CITY *" 
+                          value={newAddressForm.city}
+                          onChange={(e) => setNewAddressForm(prev => ({ ...prev, city: e.target.value }))}
+                          className="bg-dark border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-colors"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="STATE" 
+                          value={newAddressForm.state}
+                          onChange={(e) => setNewAddressForm(prev => ({ ...prev, state: e.target.value }))}
+                          className="bg-dark border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-colors"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="PIN CODE *" 
+                          value={newAddressForm.pincode}
+                          onChange={(e) => setNewAddressForm(prev => ({ ...prev, pincode: e.target.value }))}
+                          className="bg-dark border border-white/10 rounded-xl px-4 py-3 text-white text-xs font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-colors md:col-span-2"
+                        />
                       </div>
+                      <button 
+                        onClick={handleAddAddress}
+                        disabled={initStatus === 'loading' || !newAddressForm.street.trim() || !newAddressForm.city.trim() || !newAddressForm.pincode.trim()}
+                        className="w-full px-6 py-4 bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all disabled:opacity-50"
+                      >
+                        ADD SECURE NODE
+                      </button>
                     </div>
                   </div>
                 </motion.div>

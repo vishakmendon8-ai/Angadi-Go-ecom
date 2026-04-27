@@ -84,12 +84,14 @@ const Cart = () => {
   const [loading, setLoading] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState('');
-  const [address, setAddress] = useState('Neo-City, Sector 7');
+  
+  const [selectedAddress, setSelectedAddress] = useState('CUSTOM');
+  const [customAddressForm, setCustomAddressForm] = useState({ street: '', city: '', state: '', pincode: '' });
   const [paymentMethod, setPaymentMethod] = useState('Neural Card');
 
   useEffect(() => {
-    if (currentUser?.addresses?.length > 0 && address === 'Neo-City, Sector 7') {
-      setAddress(currentUser.addresses[0]);
+    if (currentUser?.addresses?.length > 0 && selectedAddress === 'CUSTOM') {
+      setSelectedAddress(currentUser.addresses[0]);
     }
   }, [currentUser]);
 
@@ -145,12 +147,16 @@ const Cart = () => {
     try {
       const customOrderId = `AG-${Math.random().toString(36).toUpperCase().substring(2, 9)}`;
       
+      const finalAddress = selectedAddress === 'CUSTOM' 
+        ? `${customAddressForm.street}, ${customAddressForm.city}${customAddressForm.state ? `, ${customAddressForm.state}` : ''}, PIN: ${customAddressForm.pincode}`
+        : selectedAddress;
+
       const orderData = {
         orderId: customOrderId,
         userId: currentUser.uid,
         userName: currentUser.name || 'Anonymous User',
         userEmail: currentUser.email,
-        address: address,
+        address: finalAddress,
         paymentMethod: paymentMethod,
         items: cart,
         pricing: {
@@ -267,25 +273,49 @@ const Cart = () => {
               </h3>
               {currentUser?.addresses?.length > 0 && (
                 <select 
-                  onChange={(e) => {
-                    if (e.target.value) setAddress(e.target.value);
-                  }}
-                  value={currentUser.addresses.includes(address) ? address : ""}
+                  onChange={(e) => setSelectedAddress(e.target.value)}
+                  value={selectedAddress}
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:border-primary transition-colors text-xs font-bold uppercase tracking-widest appearance-none mb-3"
                 >
-                  <option value="" className="bg-dark text-gray-500">CUSTOM ADDRESS...</option>
                   {currentUser.addresses.map((addr, idx) => (
                     <option key={idx} value={addr} className="bg-dark text-white">{addr}</option>
                   ))}
+                  <option value="CUSTOM" className="bg-dark text-gray-500">ENTER CUSTOM NODE...</option>
                 </select>
               )}
-              <input
-                type="text"
-                placeholder="ENTER CUSTOM NODE ADDRESS..."
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-white focus:border-primary transition-colors text-sm font-bold uppercase"
-              />
+              
+              {selectedAddress === 'CUSTOM' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-white/5 border border-white/10 rounded-xl mt-2">
+                  <input
+                    type="text"
+                    placeholder="STREET ADDRESS *"
+                    value={customAddressForm.street}
+                    onChange={(e) => setCustomAddressForm(prev => ({ ...prev, street: e.target.value }))}
+                    className="w-full bg-dark border border-white/10 rounded-xl py-3 px-4 text-white focus:border-primary transition-colors text-xs font-bold uppercase md:col-span-2"
+                  />
+                  <input
+                    type="text"
+                    placeholder="CITY *"
+                    value={customAddressForm.city}
+                    onChange={(e) => setCustomAddressForm(prev => ({ ...prev, city: e.target.value }))}
+                    className="w-full bg-dark border border-white/10 rounded-xl py-3 px-4 text-white focus:border-primary transition-colors text-xs font-bold uppercase"
+                  />
+                  <input
+                    type="text"
+                    placeholder="STATE"
+                    value={customAddressForm.state}
+                    onChange={(e) => setCustomAddressForm(prev => ({ ...prev, state: e.target.value }))}
+                    className="w-full bg-dark border border-white/10 rounded-xl py-3 px-4 text-white focus:border-primary transition-colors text-xs font-bold uppercase"
+                  />
+                  <input
+                    type="text"
+                    placeholder="PIN CODE *"
+                    value={customAddressForm.pincode}
+                    onChange={(e) => setCustomAddressForm(prev => ({ ...prev, pincode: e.target.value }))}
+                    className="w-full bg-dark border border-white/10 rounded-xl py-3 px-4 text-white focus:border-primary transition-colors text-xs font-bold uppercase md:col-span-2"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Neural Coupon */}
@@ -360,8 +390,8 @@ const Cart = () => {
 
                 <button
                   onClick={handleCheckout}
-                  disabled={loading}
-                  className="btn-primary w-full py-5 text-xl font-black italic tracking-tighter flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(59,130,246,0.4)]"
+                  disabled={loading || (selectedAddress === 'CUSTOM' && (!customAddressForm.street.trim() || !customAddressForm.city.trim() || !customAddressForm.pincode.trim()))}
+                  className="btn-primary w-full py-5 text-xl font-black italic tracking-tighter flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(59,130,246,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? <Loader2 className="animate-spin" /> : <>FINALIZE ORDER <ArrowRight size={24} /></>}
                 </button>
